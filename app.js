@@ -35,8 +35,85 @@ function newEntry(){return {condition:'',note:'',photos:[]};}
 function makeRoom(name){return {id:uid(),name,items:(ROOM_TEMPLATES[name]||['General condition','Existing damage']).map(x=>({id:uid(),label:x,movein:newEntry(),moveout:newEntry()}))};}
 function newProperty(form){return {id:uid(),name:form.name||'My rental',address:form.address||'',landlord:form.landlord||'',tenant:form.tenant||'',moveInDate:form.moveInDate||today(),moveOutDate:'',rooms:DEFAULT_ROOMS.map(makeRoom),meters:{electricity:'',water:'',gas:''},inventoryNotes:'',keys:'',signatures:{tenant:'',owner:''},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};}
 
+function demoProperty(){
+ const p=newProperty({
+   name:'Demo — Skyline Residency 2BHK',
+   address:'Flat 804, C-Wing, Skyline Residency, Wakad Road, Pune, Maharashtra 411057 (fictional demo address)',
+   tenant:'Arjun Mehta (Demo)',
+   landlord:'Neha Kulkarni (Demo)',
+   moveInDate:'2026-01-12'
+ });
+ p.id='demo-property-v1';
+ p.demo=true;
+ p.moveOutDate='2026-09-30';
+ p.meters={electricity:'14,102.7 kWh',water:'128.6 kL',gas:'167.4 SCM'};
+ p.inventoryNotes='1 three-seat sofa; 1 coffee table; dining table with 4 chairs; 2 double beds with mattresses; 3 split AC units; LG 260 L refrigerator; IFB 7 kg washing machine; 15 L water heater; 4 ceiling fans; modular kitchen hob and chimney.';
+ p.keys='2 main-door keys; 1 mailbox key; 2 society RFID cards; 1 parking remote.';
+ const bed2=makeRoom('Bedroom'); bed2.name='Bedroom 2';
+ p.rooms.splice(2,0,bed2);
+ p.rooms.push(makeRoom('Balcony'));
+
+ p.rooms.forEach(r=>r.items.forEach(i=>{
+   i.movein={condition:'Good',note:'Checked during move-in handover; no material defect noted unless stated below.',photos:[]};
+   i.moveout={condition:'Good',note:'Condition broadly consistent with move-in record and normal residential use.',photos:[]};
+ }));
+
+ const set=(roomName,label,miCondition,miNote,moCondition,moNote)=>{
+   const room=p.rooms.find(r=>r.name===roomName);
+   const item=room?.items.find(i=>i.label===label);
+   if(!item)return;
+   item.movein={condition:miCondition,note:miNote,photos:[]};
+   item.moveout={condition:moCondition,note:moNote,photos:[]};
+ };
+ set('Living room','All walls','Fair','Two small nail holes on the TV wall and a faint scuff near the balcony door, present before move-in.','Fair','Same nail holes visible. One additional light furniture scuff near the sofa area; no deep damage.');
+ set('Living room','Floor','Good','Vitrified tiles intact. Minor hairline surface scratch near the main entrance.','Good','Tiles intact; original entrance scratch unchanged.');
+ set('Living room','Windows','Good','Sliding windows open and lock correctly. Mosquito mesh intact.','Good','Windows and mesh functional; no cracked glass.');
+ set('Living room','Furniture','Good','Sofa and coffee table clean; minor wear on left sofa arm noted at handover.','Fair','Normal upholstery wear. Existing mark on left arm remains; no tear.');
+ set('Living room','Existing damage','Fair','Pre-existing paint chip approximately 2 cm wide behind the TV unit.','Fair','Original paint chip still present and unchanged.');
+
+ set('Bedroom','All walls','Good','Walls freshly painted; no dampness seen.','Good','Light normal-use marks near switchboard; no dampness or major stains.');
+ set('Bedroom','Wardrobe interior','Good','Shelves, hanging rod and drawer runners functional.','Good','Interior clean; drawer runners functional.');
+ set('Bedroom','AC','Good','Daikin split AC powers on and cools normally; remote supplied.','Good','AC tested at handover; cooling and remote functional.');
+ set('Bedroom','Existing damage','Fair','Small laminate chip on lower-right wardrobe shutter, documented at move-in.','Fair','Same laminate chip visible; no additional damage.');
+
+ set('Bedroom 2','Windows','Good','Window latch and mesh functional.','Good','Latch functional; mesh has one small 1 cm snag near lower corner.');
+ set('Bedroom 2','Switches & sockets','Good','All tested sockets operational.','Good','All tested sockets operational.');
+ set('Bedroom 2','Existing damage','Fair','Hairline paint crack above window corner, approximately 12 cm long.','Fair','Hairline crack still visible and appears unchanged.');
+
+ set('Kitchen','Sink & taps','Good','No visible leak during test; water pressure normal.','Good','No leak during handover test; drain clears normally.');
+ set('Kitchen','Countertop','Fair','Granite has a small pre-existing edge chip beside the sink.','Fair','Original edge chip unchanged; no new cracks.');
+ set('Kitchen','Cabinets interior','Good','Cabinet interiors clean and dry; hinges functional.','Good','Clean and dry; hinges functional.');
+ set('Kitchen','Stove/hob','Good','Four-burner hob ignites correctly.','Good','All four burners tested and working.');
+ set('Kitchen','Chimney/exhaust','Good','Chimney fan and light operational.','Good','Operational; filters show normal cooking residue.');
+ set('Kitchen','Fridge/appliances','Good','LG refrigerator cools normally; trays and shelves present.','Good','Refrigerator cooling normally; trays and shelves returned.');
+ set('Kitchen','Existing damage','Fair','One pre-existing chipped corner on lower cabinet laminate near sink.','Fair','Same cabinet chip visible; no additional breakage.');
+
+ set('Bathroom','Walls/tiles','Good','Tiles intact; grout slightly discoloured near shower floor.','Fair','Tiles intact. Mild hard-water staining on lower shower tiles; no cracked tile.');
+ set('Bathroom','Toilet','Good','Flush and inlet tested; no visible leak.','Good','Flush works and no visible leak during handover.');
+ set('Bathroom','Water heater','Good','15 L geyser powers on and heats water.','Good','Geyser powers on and heats normally.');
+ set('Bathroom','Drainage','Good','Floor drain clears after running shower for two minutes.','Good','Drain clears normally.');
+ set('Bathroom','Existing damage','Fair','Small rust spot on bathroom door lower hinge, present at move-in.','Fair','Original hinge rust spot unchanged.');
+
+ set('Balcony','Floor','Good','Anti-skid tiles intact and drain area clean.','Good','Tiles intact; minor dust only.');
+ set('Balcony','Railing','Good','Railing secure with no visible loose sections.','Good','Railing secure.');
+ set('Balcony','Drainage','Good','Drain clear after water test.','Good','Drain clear.');
+ set('Balcony','Existing damage','Fair','Small paint flake on outer wall beside AC drain pipe.','Fair','Original paint flake still visible.');
+
+ p.createdAt='2026-01-12T09:30:00.000Z';
+ p.updatedAt='2026-09-30T16:45:00.000Z';
+ return p;
+}
+
+async function ensureDemoProperty(){
+ const existing=await allProps();
+ if(existing.length===0 && !localStorage.getItem('rentproof-demo-seeded-v1')){
+   await saveProp(demoProperty());
+   localStorage.setItem('rentproof-demo-seeded-v1','1');
+ }
+}
+
 function homeView(){
-  const cards=properties.map(p=>{const c=completion(p,'movein');return `<article class="card property-card" data-open="${p.id}"><div class="row between"><div><div class="property-title">${esc(p.name)}</div><div class="muted tiny">${esc(p.address||'No address')}</div></div><span class="badge ${c.pct===100?'ok':''}">${c.pct}% move-in</span></div><div class="progress" style="margin-top:13px"><span style="width:${c.pct}%"></span></div><div class="row between tiny muted" style="margin-top:10px"><span>${c.done}/${c.total} checks documented</span><span>${fmt(p.moveInDate)}</span></div></article>`;}).join('');
+  const cards=properties.map(p=>{const c=completion(p,'movein');return `<article class="card property-card" data-open="${p.id}"><div class="row between"><div><div class="row" style="gap:7px"><div class="property-title">${esc(p.name)}</div>${p.demo?'<span class="badge">DEMO</span>':''}</div><div class="muted tiny">${esc(p.address||'No address')}</div></div><span class="badge ${c.pct===100?'ok':''}">${c.pct}% move-in</span></div><div class="progress" style="margin-top:13px"><span style="width:${c.pct}%"></span></div><div class="row between tiny muted" style="margin-top:10px"><span>${c.done}/${c.total} checks documented</span><span>${fmt(p.moveInDate)}</span></div></article>`;}).join('');
   return shell('RentProof',`<section class="hero"><h1>Rental evidence that stays with you.</h1><p>Document every room before and after your tenancy. Private, offline, and built for evidence—not property management.</p></section><button class="btn primary block" data-action="new-property">+ New property</button><div class="section-title"><h2>Your properties</h2><span class="badge">${properties.length}</span></div>${cards||'<div class="card empty"><div class="big">⌂</div><h3>No property yet</h3><p class="muted">Create your first rental and follow the guided inspection checklist.</p></div>'}<div class="notice" style="margin-top:20px">Photos and records stay in this browser. Export a backup after important inspections.</div>`);
 }
 function createView(){return shell('New property',`<form id="property-form" class="stack"><div class="field"><label>Property name</label><input name="name" required placeholder="e.g. Baner 2BHK"></div><div class="field"><label>Full address</label><textarea name="address" required placeholder="Building, flat, street, city"></textarea></div><div class="grid2"><div class="field"><label>Tenant name</label><input name="tenant" placeholder="Your name"></div><div class="field"><label>Owner / landlord</label><input name="landlord" placeholder="Owner name"></div></div><div class="field"><label>Move-in date</label><input type="date" name="moveInDate" value="${today()}"></div><button class="btn primary block" type="submit">Create inspection</button></form>`,true);}
@@ -99,5 +176,5 @@ app.addEventListener('change',async e=>{
 });
 app.addEventListener('input',e=>{if(e.target.matches('textarea[data-entry], input[data-meta], textarea[data-meta]')){clearTimeout(e.target._t);e.target._t=setTimeout(()=>e.target.dispatchEvent(new Event('change',{bubbles:true})),500);}});
 
-(async()=>{if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});await refresh();render();})();
+(async()=>{if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});await ensureDemoProperty();await refresh();render();})();
 })();
