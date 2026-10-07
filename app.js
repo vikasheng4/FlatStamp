@@ -106,9 +106,8 @@ function demoProperty(){
 
 async function ensureDemoProperty(){
  const existing=await allProps();
- if(existing.length===0 && !localStorage.getItem('rentproof-demo-seeded-v1')){
+ if(!existing.some(p=>p.id==='demo-property-v1')){
    await saveProp(demoProperty());
-   localStorage.setItem('rentproof-demo-seeded-v1','1');
  }
 }
 
