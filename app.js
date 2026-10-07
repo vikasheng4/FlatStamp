@@ -35,6 +35,25 @@ function newEntry(){return {condition:'',note:'',photos:[]};}
 function makeRoom(name){return {id:uid(),name,items:(ROOM_TEMPLATES[name]||['General condition','Existing damage']).map(x=>({id:uid(),label:x,movein:newEntry(),moveout:newEntry()}))};}
 function newProperty(form){return {id:uid(),name:form.name||'My rental',address:form.address||'',landlord:form.landlord||'',tenant:form.tenant||'',moveInDate:form.moveInDate||today(),moveOutDate:'',rooms:DEFAULT_ROOMS.map(makeRoom),meters:{electricity:'',water:'',gas:''},inventoryNotes:'',keys:'',signatures:{tenant:'',owner:''},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};}
 
+function demoPhoto(title,subtitle='',tone='#dbeafe'){
+ const safe=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+ <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${tone}"/><stop offset="100%" stop-color="#f8fafc"/></linearGradient></defs>
+ <rect width="1200" height="900" fill="url(#g)"/>
+ <rect x="70" y="110" width="1060" height="630" rx="32" fill="#fff" opacity=".96"/>
+ <rect x="110" y="160" width="980" height="360" rx="20" fill="#e5e7eb"/>
+ <rect x="170" y="250" width="240" height="190" rx="16" fill="#cbd5e1"/>
+ <rect x="465" y="220" width="300" height="220" rx="16" fill="#d1d5db"/>
+ <rect x="820" y="240" width="180" height="180" rx="16" fill="#bfdbfe"/>
+ <rect x="110" y="560" width="980" height="120" rx="20" fill="#f3f4f6"/>
+ <text x="110" y="785" font-family="Arial,Helvetica,sans-serif" font-size="48" font-weight="700" fill="#111827">${safe(title)}</text>
+ <text x="110" y="835" font-family="Arial,Helvetica,sans-serif" font-size="28" fill="#4b5563">${safe(subtitle)}</text>
+ <text x="1080" y="825" text-anchor="end" font-family="Arial,Helvetica,sans-serif" font-size="24" fill="#6b7280">RentProof demo</text>
+ </svg>`;
+ return {src:`data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,addedAt:'2026-01-12T10:15:00.000Z'};
+}
+function attachDemoPhoto(entry,title,subtitle,tone){entry.photos=[demoPhoto(title,subtitle,tone)];return entry;}
+
 function demoProperty(){
  const p=newProperty({
    name:'Demo — Skyline Residency 2BHK',
@@ -45,6 +64,7 @@ function demoProperty(){
  });
  p.id='demo-property-v1';
  p.demo=true;
+ p.demoVersion=2;
  p.moveOutDate='2026-09-30';
  p.meters={electricity:'14,102.7 kWh',water:'128.6 kL',gas:'167.4 SCM'};
  p.inventoryNotes='1 three-seat sofa; 1 coffee table; dining table with 4 chairs; 2 double beds with mattresses; 3 split AC units; LG 260 L refrigerator; IFB 7 kg washing machine; 15 L water heater; 4 ceiling fans; modular kitchen hob and chimney.';
@@ -64,6 +84,11 @@ function demoProperty(){
    if(!item)return;
    item.movein={condition:miCondition,note:miNote,photos:[]};
    item.moveout={condition:moCondition,note:moNote,photos:[]};
+ };
+ const pic=(roomName,label,mode,title,subtitle,tone)=>{
+   const room=p.rooms.find(r=>r.name===roomName);
+   const item=room?.items.find(i=>i.label===label);
+   if(item) attachDemoPhoto(item[mode],title,subtitle,tone);
  };
  set('Living room','All walls','Fair','Two small nail holes on the TV wall and a faint scuff near the balcony door, present before move-in.','Fair','Same nail holes visible. One additional light furniture scuff near the sofa area; no deep damage.');
  set('Living room','Floor','Good','Vitrified tiles intact. Minor hairline surface scratch near the main entrance.','Good','Tiles intact; original entrance scratch unchanged.');
@@ -99,6 +124,19 @@ function demoProperty(){
  set('Balcony','Drainage','Good','Drain clear after water test.','Good','Drain clear.');
  set('Balcony','Existing damage','Fair','Small paint flake on outer wall beside AC drain pipe.','Fair','Original paint flake still visible.');
 
+ pic('Living room','All walls','movein','Living room — walls','Move-in: nail holes and small scuff documented','#dbeafe');
+ pic('Living room','All walls','moveout','Living room — walls','Move-out: same wall condition with light use marks','#bfdbfe');
+ pic('Living room','Furniture','movein','Living room — furniture','Move-in: sofa and coffee table present','#e0e7ff');
+ pic('Bedroom','Existing damage','movein','Bedroom — wardrobe chip','Move-in: laminate chip on wardrobe shutter','#ede9fe');
+ pic('Bedroom','AC','moveout','Bedroom — AC unit','Move-out: AC tested and cooling','#ddd6fe');
+ pic('Kitchen','Countertop','movein','Kitchen — countertop edge','Move-in: pre-existing granite edge chip','#dcfce7');
+ pic('Kitchen','Stove/hob','moveout','Kitchen — hob','Move-out: all burners tested','#bbf7d0');
+ pic('Bathroom','Walls/tiles','moveout','Bathroom — lower tiles','Move-out: mild hard-water staining','#fae8ff');
+ pic('Bathroom','Water heater','movein','Bathroom — geyser','Move-in: geyser working','#fce7f3');
+ pic('Bedroom 2','Existing damage','movein','Bedroom 2 — window corner','Move-in: hairline crack above window','#fee2e2');
+ pic('Balcony','Railing','movein','Balcony — railing','Move-in: railing and outer wall condition','#fef3c7');
+ pic('Balcony','Drainage','moveout','Balcony — drain','Move-out: drain clear after test','#fde68a');
+
  p.createdAt='2026-01-12T09:30:00.000Z';
  p.updatedAt='2026-09-30T16:45:00.000Z';
  return p;
@@ -106,9 +144,8 @@ function demoProperty(){
 
 async function ensureDemoProperty(){
  const existing=await allProps();
- if(!existing.some(p=>p.id==='demo-property-v1')){
-   await saveProp(demoProperty());
- }
+ const demo=existing.find(p=>p.id==='demo-property-v1');
+ if(!demo || (demo.demoVersion||0)<2) await saveProp(demoProperty());
 }
 
 function homeView(){
