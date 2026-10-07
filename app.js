@@ -35,22 +35,9 @@ function newEntry(){return {condition:'',note:'',photos:[]};}
 function makeRoom(name){return {id:uid(),name,items:(ROOM_TEMPLATES[name]||['General condition','Existing damage']).map(x=>({id:uid(),label:x,movein:newEntry(),moveout:newEntry()}))};}
 function newProperty(form){return {id:uid(),name:form.name||'My rental',address:form.address||'',landlord:form.landlord||'',tenant:form.tenant||'',moveInDate:form.moveInDate||today(),moveOutDate:'',rooms:DEFAULT_ROOMS.map(makeRoom),meters:{electricity:'',water:'',gas:''},inventoryNotes:'',keys:'',signatures:{tenant:'',owner:''},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};}
 
-function demoPhoto(title,subtitle='',tone='#dbeafe'){
- const safe=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
- const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
- <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${tone}"/><stop offset="100%" stop-color="#f8fafc"/></linearGradient></defs>
- <rect width="1200" height="900" fill="url(#g)"/>
- <rect x="70" y="110" width="1060" height="630" rx="32" fill="#fff" opacity=".96"/>
- <rect x="110" y="160" width="980" height="360" rx="20" fill="#e5e7eb"/>
- <rect x="170" y="250" width="240" height="190" rx="16" fill="#cbd5e1"/>
- <rect x="465" y="220" width="300" height="220" rx="16" fill="#d1d5db"/>
- <rect x="820" y="240" width="180" height="180" rx="16" fill="#bfdbfe"/>
- <rect x="110" y="560" width="980" height="120" rx="20" fill="#f3f4f6"/>
- <text x="110" y="785" font-family="Arial,Helvetica,sans-serif" font-size="48" font-weight="700" fill="#111827">${safe(title)}</text>
- <text x="110" y="835" font-family="Arial,Helvetica,sans-serif" font-size="28" fill="#4b5563">${safe(subtitle)}</text>
- <text x="1080" y="825" text-anchor="end" font-family="Arial,Helvetica,sans-serif" font-size="24" fill="#6b7280">RentProof demo</text>
- </svg>`;
- return {src:`data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,addedAt:'2026-01-12T10:15:00.000Z'};
+function demoPhoto(title,subtitle=''){
+ const fixture=/AC unit|geyser|hob|countertop|drain|wardrobe|tiles/i.test(title+' '+subtitle);
+ return {src:fixture?'demo/demo-fixture.jpg?v=5':'demo/demo-room.jpg?v=5',addedAt:'2026-01-12T10:15:00.000Z'};
 }
 function attachDemoPhoto(entry,title,subtitle,tone){entry.photos=[demoPhoto(title,subtitle,tone)];return entry;}
 
@@ -64,7 +51,7 @@ function demoProperty(){
  });
  p.id='demo-property-v1';
  p.demo=true;
- p.demoVersion=2;
+ p.demoVersion=3;
  p.moveOutDate='2026-09-30';
  p.meters={electricity:'14,102.7 kWh',water:'128.6 kL',gas:'167.4 SCM'};
  p.inventoryNotes='1 three-seat sofa; 1 coffee table; dining table with 4 chairs; 2 double beds with mattresses; 3 split AC units; LG 260 L refrigerator; IFB 7 kg washing machine; 15 L water heater; 4 ceiling fans; modular kitchen hob and chimney.';
@@ -145,7 +132,7 @@ function demoProperty(){
 async function ensureDemoProperty(){
  const existing=await allProps();
  const demo=existing.find(p=>p.id==='demo-property-v1');
- if(!demo || (demo.demoVersion||0)<2) await saveProp(demoProperty());
+ if(!demo || (demo.demoVersion||0)<3) await saveProp(demoProperty());
 }
 
 function homeView(){
@@ -187,11 +174,25 @@ async function currentProp(){if(editing)return editing;const p=properties.find(x
 async function persist(p,msg){await saveProp(p);editing=p;await refresh();editing=properties.find(x=>x.id===p.id)||p;if(msg)toast(msg);}
 function download(name,data,type='application/json'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);}
 function cleanBackup(p){return p;}
+async function printReportWhenReady(){
+ const imgs=Array.from(document.images);
+ await Promise.all(imgs.map(img=>{
+   if(img.complete && img.naturalWidth>0)return Promise.resolve();
+   return new Promise(resolve=>{
+     const done=()=>resolve();
+     img.addEventListener('load',done,{once:true});
+     img.addEventListener('error',done,{once:true});
+     setTimeout(done,4000);
+   });
+ }));
+ await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+ window.print();
+}
 
 app.addEventListener('submit',async e=>{if(e.target.id==='property-form'){e.preventDefault();const f=Object.fromEntries(new FormData(e.target));const p=newProperty(f);await persist(p);nav({view:'property',propertyId:p.id,mode:'movein'});}});
 app.addEventListener('click',async e=>{
  const a=e.target.closest('[data-action]');
- if(a){const act=a.dataset.action;if(act==='back')return back();if(act==='settings')return nav({view:'settings'});if(act==='new-property')return nav({view:'create'});if(act==='print')return window.print();
+ if(a){const act=a.dataset.action;if(act==='back')return back();if(act==='settings')return nav({view:'settings'});if(act==='new-property')return nav({view:'create'});if(act==='print')return printReportWhenReady();
  const p=await currentProp();
  if(act==='add-room'){const name=prompt('Room name','Bedroom 2');if(name){p.rooms.push(makeRoom(name.trim()||'Room'));await persist(p,'Room added');render();}return;}
  if(act==='report')return nav({view:'report',propertyId:p.id,mode:a.dataset.mode});
