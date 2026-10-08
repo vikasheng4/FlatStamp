@@ -19,6 +19,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Validate static app
+        run: |
+          node --check app.js
+          python -m json.tool manifest.webmanifest > /dev/null
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
