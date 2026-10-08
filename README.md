@@ -1,24 +1,27 @@
-# RentProof
+# FlatStamp
 
-RentProof is a zero-backend, mobile-first Progressive Web App for documenting rental move-in and move-out condition evidence.
+FlatStamp is a zero-backend, mobile-first Progressive Web App for documenting rental move-in and move-out condition evidence.
 
-## Features
+## MVP features
 
 - Guided room-by-room inspection checklists
-- Move-in and move-out records
+- Separate move-in and move-out records
+- Move-in vs move-out comparison report
 - Camera/photo capture with on-device compression
 - Condition notes and damage descriptions
-- Electricity, water and gas meter readings
-- Keys/access-card inventory
-- Printable evidence report for Save as PDF
-- Local IndexedDB storage
-- JSON backup/export and restore
-- Offline PWA support
+- Separate meter readings, inventory, and keys/access notes for each inspection
+- Printable reports for Save as PDF
+- Native share-sheet summary with clipboard fallback
+- Local IndexedDB storage and JSON backup/restore
+- Optional realistic demo property
+- Offline PWA support and install guidance
 - No account, analytics, ads, backend, or external API
 
-## Local testing
+## Data compatibility
 
-Serve the directory over HTTP (service workers do not run from `file://`):
+The IndexedDB database intentionally retains the historical `rentproof-db` key so existing users keep their locally stored records after the FlatStamp rename. Records are normalized in-app to the current schema.
+
+## Local testing
 
 ```bash
 python3 -m http.server 8000
@@ -28,14 +31,10 @@ Then visit `http://localhost:8000`.
 
 ## GitHub Pages
 
-A Pages workflow is included at `.github/workflows/pages.yml`.
+The included Pages workflow deploys every push to `main`. Repository Pages should use **GitHub Actions** as the source.
 
-For a new public repository, go to **Settings → Pages → Build and deployment → Source → GitHub Actions** once. After that, every push to `main` deploys automatically.
+## Privacy and limitations
 
-## Data model and privacy
+Inspection data and photos are stored locally in the browser. Users should export backups because clearing browser/site data can delete local records.
 
-Inspection data and photos are stored in browser IndexedDB. Users should export backups because clearing browser/site data can delete local records.
-
-## Limitations
-
-This app creates structured evidence; it does not provide legal advice, prove authenticity by itself, or guarantee a deposit dispute outcome. For stronger evidence, users should promptly share the generated report with the landlord/tenant through an independent channel.
+FlatStamp creates structured condition records; it does not provide legal advice, independently prove authenticity, or guarantee a deposit-dispute outcome. For stronger practical documentation, share the report with the other party promptly through an independent channel.
