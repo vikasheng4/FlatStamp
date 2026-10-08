@@ -1,7 +1,7 @@
-const CACHE='flatstamp-v6';
+const CACHE='flatstamp-v7';
 const ASSETS=[
-  './','index.html','styles.css?v=6','app.js?v=6','manifest.webmanifest?v=6','privacy.html',
-  'icons/icon-192.png?v=6','icons/icon-512.png?v=6','demo/demo-room.jpg?v=6','demo/demo-fixture.jpg?v=6'
+  './','index.html','styles.css?v=7','app.js?v=7','manifest.webmanifest?v=7','privacy.html','vendor/jspdf.umd.min.js?v=7','vendor/jspdf-LICENSE.txt',
+  'icons/icon-192.png?v=7','icons/icon-512.png?v=7','demo/demo-room.jpg?v=7','demo/demo-fixture.jpg?v=7'
 ];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
