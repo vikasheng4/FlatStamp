@@ -93,12 +93,12 @@ function reportPhotos(e){return (e.photos||[]).map((ph,n)=>{const ts=photoTime(p
 function reportView(p,mode){
   const meta=p.metaByMode[mode],c=completion(p,mode);
   const roomBlocks=p.rooms.map(r=>{const rows=r.items.map(i=>{const e=i[mode]||newEntry();if(!hasEntry(e))return '';return `<div class="card"><div class="row between"><h3>${esc(i.label)}</h3><span class="badge ${e.condition==='Good'?'ok':e.condition==='Needs repair'||e.condition==='Damaged'?'warn':''}">${esc(e.condition||'Not recorded')}</span></div>${e.note?`<p>${esc(e.note)}</p>`:''}${e.photos?.length?`<div class="photo-grid">${reportPhotos(e)}</div>`:''}</div>`;}).join('');return rows?`<section><div class="section-title"><h2>${esc(r.name)}</h2></div>${rows}</section>`:'';}).join('');
-  return shell('Evidence report',`<section class="report-head"><div class="report-logo">FlatStamp</div><div class="eyebrow">${modeLabel(mode)} condition report</div><h1 style="margin:0 0 6px">${esc(p.name)}</h1><div class="report-id">${reportId(p,mode)}</div></section><div class="card"><div class="kv"><span>Address</span><b>${esc(p.address||'—')}</b></div><div class="kv"><span>Tenant</span><b>${esc(p.tenant||'—')}</b></div><div class="kv"><span>Owner / landlord</span><b>${esc(p.landlord||'—')}</b></div><div class="kv"><span>Tenancy / furnishing</span><b>${esc(p.tenancyType)} · ${esc(p.furnishing)}</b></div><div class="kv"><span>Inspection date</span><b>${mode==='movein'?fmt(p.moveInDate):fmt(p.moveOutDate||today())}</b></div><div class="kv"><span>Documented checks</span><b>${c.done}/${c.total}</b></div></div><div class="card"><h3>Property evidence</h3><div class="kv"><span>Electricity</span><b>${esc(meta.meters.electricity||'—')}</b></div><div class="kv"><span>Water</span><b>${esc(meta.meters.water||'—')}</b></div><div class="kv"><span>Gas</span><b>${esc(meta.meters.gas||'—')}</b></div><div class="kv"><span>Inventory</span><b>${esc(meta.inventoryNotes||'—')}</b></div><div class="kv"><span>Keys / access</span><b>${esc(meta.keys||'—')}</b></div></div>${roomBlocks}<div class="notice">FlatStamp organizes locally stored condition records. It does not independently prove authenticity or provide legal advice. Keep your exported report and share it promptly through an independent channel.</div><div class="bottom-actions no-print"><div class="grid2"><button class="btn primary block" data-action="print">Print / Save as PDF</button><button class="btn block" data-action="share-summary" data-mode="${mode}">Share summary</button></div></div>`,true);
+  return shell('Evidence report',`<section class="report-head"><div class="report-logo">FlatStamp</div><div class="eyebrow">${modeLabel(mode)} condition report</div><h1 style="margin:0 0 6px">${esc(p.name)}</h1><div class="report-id">${reportId(p,mode)}</div></section><div class="card"><div class="kv"><span>Address</span><b>${esc(p.address||'—')}</b></div><div class="kv"><span>Tenant</span><b>${esc(p.tenant||'—')}</b></div><div class="kv"><span>Owner / landlord</span><b>${esc(p.landlord||'—')}</b></div><div class="kv"><span>Tenancy / furnishing</span><b>${esc(p.tenancyType)} · ${esc(p.furnishing)}</b></div><div class="kv"><span>Inspection date</span><b>${mode==='movein'?fmt(p.moveInDate):fmt(p.moveOutDate||today())}</b></div><div class="kv"><span>Documented checks</span><b>${c.done}/${c.total}</b></div></div><div class="card"><h3>Property evidence</h3><div class="kv"><span>Electricity</span><b>${esc(meta.meters.electricity||'—')}</b></div><div class="kv"><span>Water</span><b>${esc(meta.meters.water||'—')}</b></div><div class="kv"><span>Gas</span><b>${esc(meta.meters.gas||'—')}</b></div><div class="kv"><span>Inventory</span><b>${esc(meta.inventoryNotes||'—')}</b></div><div class="kv"><span>Keys / access</span><b>${esc(meta.keys||'—')}</b></div></div>${roomBlocks}<div class="notice">FlatStamp organizes locally stored condition records. It does not independently prove authenticity or provide legal advice. Keep your exported report and share it promptly through an independent channel.</div><div class="bottom-actions no-print"><div class="grid2"><button class="btn primary block" data-action="print">Save / Share PDF</button><button class="btn block" data-action="share-summary" data-mode="${mode}">Share summary</button></div></div>`,true);
 }
 function compareView(p){
   const stats=changedItems(p),mi=completion(p,'movein'),mo=completion(p,'moveout');
   const blocks=p.rooms.map(r=>{const rows=r.items.filter(i=>hasEntry(i.movein)||hasEntry(i.moveout)).map(i=>`<div class="compare-row"><div><b>${esc(i.label)}</b></div><div class="compare-cell movein"><span class="badge">${esc(i.movein?.condition||'Not recorded')}</span>${i.movein?.note?`<div class="compare-note">${esc(i.movein.note)}</div>`:''}${i.movein?.photos?.length?`<div class="compare-photos">${i.movein.photos.slice(0,2).map(ph=>`<div class="photo"><img src="${photoSrc(ph)}" alt="Move-in evidence"></div>`).join('')}</div>`:''}</div><div class="compare-cell moveout"><span class="badge ${CONDITION_SCORE[i.moveout?.condition||'']>CONDITION_SCORE[i.movein?.condition||'']?'warn':''}">${esc(i.moveout?.condition||'Not recorded')}</span>${i.moveout?.note?`<div class="compare-note">${esc(i.moveout.note)}</div>`:''}${i.moveout?.photos?.length?`<div class="compare-photos">${i.moveout.photos.slice(0,2).map(ph=>`<div class="photo"><img src="${photoSrc(ph)}" alt="Move-out evidence"></div>`).join('')}</div>`:''}</div></div>`).join('');return rows?`<section><div class="section-title"><h2>${esc(r.name)}</h2></div><div class="card"><div class="compare-row compare-head"><div>Checklist item</div><div>Move-in</div><div>Move-out</div></div>${rows}</div></section>`:'';}).join('');
-  return shell('Comparison report',`<section class="report-head"><div class="report-logo">FlatStamp</div><div class="eyebrow">Move-in vs move-out</div><h1 style="margin:0 0 6px">${esc(p.name)}</h1><div class="report-id">${reportId(p,'compare')}</div></section><div class="grid3"><div class="summary-stat"><span class="tiny muted">Changed records</span><b>${stats.changed}</b></div><div class="summary-stat"><span class="tiny muted">Potentially worse</span><b>${stats.worse}</b></div><div class="summary-stat"><span class="tiny muted">Move-out complete</span><b>${mo.pct}%</b></div></div><div class="card"><div class="kv"><span>Move-in</span><b>${fmt(p.moveInDate)} · ${mi.done}/${mi.total}</b></div><div class="kv"><span>Move-out</span><b>${fmt(p.moveOutDate||'')} · ${mo.done}/${mo.total}</b></div><div class="kv"><span>Address</span><b>${esc(p.address||'—')}</b></div></div>${blocks}<div class="notice">A condition change is a comparison aid, not a legal conclusion. Review photos and notes alongside the condition labels.</div><div class="bottom-actions no-print"><div class="grid2"><button class="btn primary block" data-action="print">Print / Save comparison PDF</button><button class="btn block" data-action="share-summary" data-mode="compare">Share comparison summary</button></div></div>`,true);
+  return shell('Comparison report',`<section class="report-head"><div class="report-logo">FlatStamp</div><div class="eyebrow">Move-in vs move-out</div><h1 style="margin:0 0 6px">${esc(p.name)}</h1><div class="report-id">${reportId(p,'compare')}</div></section><div class="grid3"><div class="summary-stat"><span class="tiny muted">Changed records</span><b>${stats.changed}</b></div><div class="summary-stat"><span class="tiny muted">Potentially worse</span><b>${stats.worse}</b></div><div class="summary-stat"><span class="tiny muted">Move-out complete</span><b>${mo.pct}%</b></div></div><div class="card"><div class="kv"><span>Move-in</span><b>${fmt(p.moveInDate)} · ${mi.done}/${mi.total}</b></div><div class="kv"><span>Move-out</span><b>${fmt(p.moveOutDate||'')} · ${mo.done}/${mo.total}</b></div><div class="kv"><span>Address</span><b>${esc(p.address||'—')}</b></div></div>${blocks}<div class="notice">A condition change is a comparison aid, not a legal conclusion. Review photos and notes alongside the condition labels.</div><div class="bottom-actions no-print"><div class="grid2"><button class="btn primary block" data-action="print">Save / Share comparison PDF</button><button class="btn block" data-action="share-summary" data-mode="compare">Share comparison summary</button></div></div>`,true);
 }
 function settingsView(){const standalone=window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true;return shell('Settings',`<div class="card stack"><div><h3>Install FlatStamp</h3><p class="muted">${standalone?'FlatStamp is already running as an installed app.':'Keep FlatStamp on your home screen for faster access and offline use.'}</p></div>${standalone?'':`<div><b>iPhone / iPad</b><ol class="install-steps"><li>Open this page in Safari.</li><li>Tap Share.</li><li>Choose “Add to Home Screen”.</li></ol></div><div class="divider"></div><div><b>Android / Chrome</b><ol class="install-steps"><li>Open the browser menu.</li><li>Choose “Install app” or “Add to Home screen”.</li></ol></div>`}</div><div class="card stack"><div><h3>Backup & restore</h3><p class="muted">Records live in this browser. Export backups after important inspections.</p></div><button class="btn block" data-action="export-all">Export all data</button><label class="btn block">Import backup<input hidden type="file" accept="application/json" id="import-file"></label><button class="btn soft block" data-action="open-demo">Open demo property</button></div><div class="card stack"><div><h3>Privacy</h3><p class="muted">No account, analytics, advertising, or FlatStamp backend is used in this MVP.</p></div><a class="btn block" href="privacy.html">Privacy policy</a></div>`,true);}
 
@@ -120,7 +120,124 @@ async function compressImage(file){return new Promise((resolve,reject)=>{const f
 async function currentProp(){if(editing)return normalizeProperty(editing);const p=properties.find(x=>x.id===route.propertyId);editing=p;return p;}
 async function persist(p,msg){normalizeProperty(p);await saveProp(p);editing=p;await refresh();editing=properties.find(x=>x.id===p.id)||p;if(msg)toast(msg);}
 function download(name,data,type='application/json'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);}
-async function printReportWhenReady(){const imgs=Array.from(document.images);await Promise.all(imgs.map(img=>{if(img.complete&&img.naturalWidth>0)return Promise.resolve();return new Promise(resolve=>{const done=()=>resolve();img.addEventListener('load',done,{once:true});img.addEventListener('error',done,{once:true});setTimeout(done,5000);});}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));window.print();}
+let pendingPdf=null;
+function pdfName(s){return String(s||'report').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').toLowerCase()||'report';}
+function pdfText(s){return String(s==null?'':s).replace(/[–—]/g,'-').replace(/·/g,' | ').replace(/[“”]/g,'"').replace(/[’]/g,"'").replace(/[^\x20-\x7E\n]/g,'?');}
+async function imageData(src){
+  if(!src)return '';
+  if(src.startsWith('data:'))return src;
+  const res=await fetch(src);if(!res.ok)throw new Error('Image unavailable');
+  const blob=await res.blob();
+  return await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob);});
+}
+async function createFlatStampPdf(p,mode){
+  const JsPDF=window.jspdf?.jsPDF;if(!JsPDF)throw new Error('PDF engine unavailable');
+  const doc=new JsPDF({unit:'mm',format:'a4',compress:true});
+  const M=15,W=180,BOTTOM=282;let y=15;
+  const ensure=h=>{if(y+h>BOTTOM){doc.addPage();y=15;doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(15,118,110);doc.text('FlatStamp',M,y);y+=9;}};
+  const text=(value,size=10,style='normal',color=[16,32,30],gap=2,maxW=W)=>{
+    const v=pdfText(value);if(!v)return;doc.setFont('helvetica',style);doc.setFontSize(size);doc.setTextColor(...color);
+    const lines=doc.splitTextToSize(v,maxW);const h=lines.length*(size*.42+1.1);ensure(h+gap);doc.text(lines,M,y);y+=h+gap;
+  };
+  const section=value=>{ensure(14);y+=3;doc.setDrawColor(220,229,227);doc.line(M,y+6,M+W,y+6);doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(15,118,110);doc.text(pdfText(value),M,y+4);y+=12;};
+  const kv=(label,value)=>{ensure(14);doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(102,117,114);doc.text(pdfText(label).toUpperCase(),M,y);y+=4;text(value||'-',9,'normal',[16,32,30],3);};
+  const photos=async(arr,prefix='Photo')=>{
+    const list=(arr||[]).filter(Boolean);if(!list.length)return;
+    for(let i=0;i<list.length;i+=3){
+      ensure(47);const row=list.slice(i,i+3),cw=56,g=6;
+      for(let j=0;j<row.length;j++){
+        try{
+          const data=await imageData(photoSrc(row[j]));const x=M+j*(cw+g);
+          doc.setFillColor(244,247,246);doc.rect(x,y,cw,35,'F');
+          const fmt=data.startsWith('data:image/png')?'PNG':'JPEG';
+          doc.addImage(data,fmt,x,y,cw,35,undefined,'FAST');
+          doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(102,117,114);
+          doc.text(pdfText(prefix+' '+(i+j+1)),x,y+39);
+        }catch{}
+      }
+      y+=44;
+    }
+  };
+
+  doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(15,118,110);doc.text('FlatStamp',M,y);y+=8;
+  text(mode==='compare'?'MOVE-IN VS MOVE-OUT COMPARISON':modeLabel(mode).toUpperCase()+' CONDITION REPORT',8,'bold',[102,117,114],4);
+  text(p.name,20,'bold',[16,32,30],2);
+  text(reportId(p,mode),7,'normal',[102,117,114],6);
+  section('Property');
+  kv('Address',p.address);kv('Tenant',p.tenant);kv('Owner / landlord',p.landlord);kv('Tenancy / furnishing',(p.tenancyType||'-')+' | '+(p.furnishing||'-'));
+
+  if(mode==='compare'){
+    const s=changedItems(p),mi=completion(p,'movein'),mo=completion(p,'moveout');
+    kv('Move-in',fmt(p.moveInDate)+' | '+mi.done+'/'+mi.total+' checks');
+    kv('Move-out',fmt(p.moveOutDate||'')+' | '+mo.done+'/'+mo.total+' checks');
+    kv('Summary',s.changed+' changed records | '+s.worse+' potentially worse');
+    section('Meter readings');
+    const a=p.metaByMode.movein,b=p.metaByMode.moveout;
+    kv('Electricity',(a.meters.electricity||'-')+' -> '+(b.meters.electricity||'-'));
+    kv('Water',(a.meters.water||'-')+' -> '+(b.meters.water||'-'));
+    kv('Gas',(a.meters.gas||'-')+' -> '+(b.meters.gas||'-'));
+    for(const room of p.rooms){
+      const items=room.items.filter(i=>hasEntry(i.movein)||hasEntry(i.moveout));if(!items.length)continue;
+      section(room.name);
+      for(const item of items){
+        text(item.label,12,'bold',[16,32,30],2);
+        text('MOVE-IN | '+(item.movein.condition||'Not recorded'),8,'bold',[15,118,110],1);
+        if(item.movein.note)text(item.movein.note,9,'normal',[16,32,30],2);
+        await photos(item.movein.photos,'Move-in photo');
+        text('MOVE-OUT | '+(item.moveout.condition||'Not recorded'),8,'bold',[161,92,0],1);
+        if(item.moveout.note)text(item.moveout.note,9,'normal',[16,32,30],2);
+        await photos(item.moveout.photos,'Move-out photo');y+=2;
+      }
+    }
+    section('Important');text('A condition change is a comparison aid, not a legal conclusion. Review photos and notes alongside the condition labels.',8,'normal',[66,81,77],2);
+  }else{
+    const meta=p.metaByMode[mode],c=completion(p,mode);
+    kv('Inspection date',mode==='movein'?fmt(p.moveInDate):fmt(p.moveOutDate||today()));
+    kv('Documented checks',c.done+'/'+c.total);
+    section('Property evidence');
+    kv('Electricity meter',meta.meters.electricity);kv('Water meter',meta.meters.water);kv('Gas meter',meta.meters.gas);
+    kv('Furniture / appliance inventory',meta.inventoryNotes);kv('Keys / access cards',meta.keys);
+    for(const room of p.rooms){
+      const items=room.items.filter(i=>hasEntry(i[mode]));if(!items.length)continue;
+      section(room.name);
+      for(const item of items){
+        const e=item[mode];text(item.label,12,'bold',[16,32,30],1);text(e.condition||'Not recorded',8,'bold',e.condition==='Good'?[21,115,71]:[161,92,0],1);
+        if(e.note)text(e.note,9,'normal',[16,32,30],2);await photos(e.photos,'Photo');y+=2;
+      }
+    }
+    section('Important');text('FlatStamp organizes locally stored condition records. It does not independently prove authenticity, provide legal advice, or guarantee the outcome of a deposit or tenancy dispute.',8,'normal',[66,81,77],2);
+  }
+  const filename='flatstamp-'+pdfName(p.name)+'-'+(mode==='compare'?'comparison':mode)+'.pdf';
+  return {blob:doc.output('blob'),filename};
+}
+function closePdfSheet(){
+  document.getElementById('flatstamp-pdf-sheet')?.remove();
+  if(pendingPdf?.url)URL.revokeObjectURL(pendingPdf.url);
+  pendingPdf=null;
+}
+function showPdfSheet(blob,filename){
+  closePdfSheet();const url=URL.createObjectURL(blob);let file;
+  try{file=new File([blob],filename,{type:'application/pdf'});}catch{file=blob;}
+  pendingPdf={blob,file,url,filename};
+  const box=document.createElement('div');box.id='flatstamp-pdf-sheet';
+  box.style.cssText='position:fixed;z-index:300;inset:0;background:rgba(16,32,30,.48);display:flex;align-items:flex-end;justify-content:center;padding:18px;padding-bottom:calc(18px + env(safe-area-inset-bottom));';
+  box.innerHTML='<div style="width:min(100%,560px);background:#fff;border-radius:22px;padding:18px;display:grid;gap:10px;box-shadow:0 24px 70px rgba(0,0,0,.28)"><div class="eyebrow">PDF ready</div><h3 style="margin:0;overflow-wrap:anywhere">'+esc(filename)+'</h3><p class="muted" style="margin:0 0 4px;line-height:1.45">Created on this device. On iPhone/iPad, tap Share / Save to Files.</p><button class="btn primary block" id="flatstamp-pdf-share">Share / Save to Files</button><a class="btn block" id="flatstamp-pdf-open" target="_blank" rel="noopener">Open PDF</a><a class="btn block" id="flatstamp-pdf-download" download>Download PDF</a><button class="btn block" id="flatstamp-pdf-close">Close</button></div>';
+  document.body.appendChild(box);
+  box.querySelector('#flatstamp-pdf-open').href=url;
+  const dl=box.querySelector('#flatstamp-pdf-download');dl.href=url;dl.download=filename;
+  box.querySelector('#flatstamp-pdf-close').onclick=closePdfSheet;
+  box.querySelector('#flatstamp-pdf-share').onclick=async()=>{
+    try{
+      if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({files:[file],title:'FlatStamp PDF'});return;}
+      window.open(url,'_blank','noopener');
+    }catch(err){if(err?.name!=='AbortError')toast('Could not open share sheet. Try Open PDF.');}
+  };
+}
+async function savePdfReport(){
+  const p=await currentProp();if(!p)return;const mode=route.view==='compare'?'compare':(route.mode||'movein');
+  toast('Creating PDF...');
+  try{const out=await createFlatStampPdf(p,mode);showPdfSheet(out.blob,out.filename);}catch(err){console.error(err);toast('Could not create PDF');}
+}
 function summaryText(p,mode){if(mode==='compare'){const s=changedItems(p);return `FlatStamp comparison — ${p.name}\n${p.address||''}\nMove-in: ${fmt(p.moveInDate)} · Move-out: ${fmt(p.moveOutDate||'')}\nChanged records: ${s.changed}; potentially worse: ${s.worse}.\nGenerated with FlatStamp.`;}const c=completion(p,mode);return `FlatStamp ${modeLabel(mode)} report — ${p.name}\n${p.address||''}\nInspection date: ${mode==='movein'?fmt(p.moveInDate):fmt(p.moveOutDate||today())}\nDocumented checks: ${c.done}/${c.total}.\nGenerated with FlatStamp.`;}
 async function shareSummary(p,mode){const text=summaryText(p,mode),title=`FlatStamp — ${p.name}`;try{if(navigator.share){await navigator.share({title,text});return;}if(navigator.clipboard){await navigator.clipboard.writeText(text);toast('Summary copied to clipboard');return;}}catch(err){if(err?.name==='AbortError')return;}toast('Sharing is not available in this browser');}
 async function openDemo(){let demo=properties.find(p=>p.id===DEMO_ID);if(!demo){demo=demoProperty();await saveProp(demo);await refresh();}editing=properties.find(p=>p.id===DEMO_ID)||demo;nav({view:'property',propertyId:DEMO_ID,mode:'movein'});}
@@ -128,7 +245,7 @@ async function openDemo(){let demo=properties.find(p=>p.id===DEMO_ID);if(!demo){
 app.addEventListener('submit',async e=>{if(e.target.id==='property-form'){e.preventDefault();const p=newProperty(Object.fromEntries(new FormData(e.target)));await persist(p);nav({view:'property',propertyId:p.id,mode:'movein'});}});
 app.addEventListener('click',async e=>{
   const a=e.target.closest('[data-action]');
-  if(a){const act=a.dataset.action;if(act==='back')return back();if(act==='settings')return nav({view:'settings'});if(act==='new-property')return nav({view:'create'});if(act==='open-demo')return openDemo();if(act==='print')return printReportWhenReady();
+  if(a){const act=a.dataset.action;if(act==='back')return back();if(act==='settings')return nav({view:'settings'});if(act==='new-property')return nav({view:'create'});if(act==='open-demo')return openDemo();if(act==='print')return savePdfReport();
     const p=await currentProp();if(!p)return;
     if(act==='add-room'){const name=prompt('Room name','Bedroom 2');if(name){p.rooms.push(makeRoom(name.trim()||'Room'));await persist(p,'Room added');render();}return;}
     if(act==='report')return nav({view:'report',propertyId:p.id,mode:a.dataset.mode});
