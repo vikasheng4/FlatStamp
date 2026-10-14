@@ -394,7 +394,7 @@ export default function App(){
   },[]);
   const notify=msg=>{setToastMessage(msg);setTimeout(()=>setToastMessage(''),2300);};
   const selected=useMemo(()=>properties.find(p=>p.id===route.propertyId),[properties,route.propertyId]);
-  const persist=async p=>{await saveProperty(p);await refresh();};
+  const persist=async p=>{const next=clone(p);setProperties(prev=>prev.map(x=>x.id===next.id?next:x));await saveProperty(next);setProperties(prev=>prev.map(x=>x.id===next.id?next:x));};
 
   const create=async form=>{
     const p=newProperty(form);await saveProperty(p);await refresh();setModeState('movein');setRoute({view:'property',propertyId:p.id});
