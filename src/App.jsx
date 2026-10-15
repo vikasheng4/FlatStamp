@@ -72,6 +72,39 @@ function Stat({label,value,sub,icon:Icon}){
   return <div className="stat-card">{Icon&&<div className="stat-icon"><Icon size={18}/></div>}<div><div className="stat-value">{value}</div><div className="stat-label">{label}</div>{sub&&<div className="stat-sub">{sub}</div>}</div></div>;
 }
 
+function HeroEvidenceScene(){
+  return <div className="evidence-scene" aria-hidden="true">
+    <div className="scene-halo"/>
+    <motion.div className="scene-card scene-main"
+      initial={{opacity:0,y:18,rotate:-3}} animate={{opacity:1,y:0,rotate:-2}}
+      transition={{delay:.1,type:'spring',stiffness:110,damping:15}}>
+      <div className="scene-card-head"><span>Living room</span><Pill tone="good"><Check size={11}/> Complete</Pill></div>
+      <div className="scene-photo">
+        <div className="scene-window"/><div className="scene-sofa"/><div className="scene-table"/>
+        <div className="scan-line"/>
+      </div>
+      <div className="scene-meta"><span><Camera size={13}/> 12 photos</span><span>9/9 checks</span></div>
+    </motion.div>
+    <motion.div className="scene-card scene-float top"
+      initial={{opacity:0,x:20,y:6}} animate={{opacity:1,x:0,y:0}}
+      transition={{delay:.28,type:'spring',stiffness:130,damping:16}}>
+      <div className="mini-orb"><ShieldCheck size={16}/></div>
+      <div><b>Stored locally</b><span>Private by default</span></div>
+    </motion.div>
+    <motion.div className="scene-card scene-float bottom"
+      initial={{opacity:0,x:-14,y:12}} animate={{opacity:1,x:0,y:0}}
+      transition={{delay:.4,type:'spring',stiffness:130,damping:16}}>
+      <div className="mini-orb violet"><FileDown size={16}/></div>
+      <div><b>Report ready</b><span>Save · share · compare</span></div>
+    </motion.div>
+    <motion.div className="stamp-seal"
+      initial={{scale:.7,opacity:0,rotate:-18}} animate={{scale:1,opacity:1,rotate:-8}}
+      transition={{delay:.58,type:'spring',stiffness:180,damping:12}}>
+      <Sparkles size={15}/><span>STAMPED</span>
+    </motion.div>
+  </div>;
+}
+
 function HomeView({properties,onCreate,onOpen,onDemo,onSettings}){
   const total=properties.filter(p=>!p.demo).length;
   const completed=properties.filter(p=>completion(p,'movein').pct===100&&!p.demo).length;
@@ -79,15 +112,18 @@ function HomeView({properties,onCreate,onOpen,onDemo,onSettings}){
     <AppHeader onSettings={false}/>
     <main className="screen home-screen">
       <section className="hero-card">
-        <div className="hero-glow one"/><div className="hero-glow two"/>
-        <div className="hero-kicker"><Sparkles size={15}/> Deposit-ready documentation</div>
-        <h1>Stamp the condition.<br/><span>Keep the record.</span></h1>
-        <p>Guided move-in and move-out evidence, built to be simple enough to actually finish.</p>
-        <div className="hero-actions">
-          <button className="btn primary xl" onClick={onCreate}><Plus size={20}/> New inspection</button>
-          <button className="btn glass xl" onClick={onDemo}><Layers3 size={19}/> Try demo</button>
+        <div className="hero-glow one"/><div className="hero-glow two"/><div className="hero-sheen"/>
+        <div className="hero-copy">
+          <div className="hero-kicker"><Sparkles size={15}/> Deposit-ready documentation</div>
+          <h1>Stamp the condition.<br/><span>Keep the record.</span></h1>
+          <p>Guided move-in and move-out evidence, built to be simple enough to actually finish.</p>
+          <div className="hero-actions">
+            <button className="btn primary xl magic-cta" onClick={onCreate}><Plus size={20}/> New inspection</button>
+            <button className="btn glass xl" onClick={onDemo}><Layers3 size={19}/> Try demo</button>
+          </div>
+          <div className="privacy-chip"><ShieldCheck size={16}/> Local-first · no account · works offline</div>
         </div>
-        <div className="privacy-chip"><ShieldCheck size={16}/> Local-first · no account · works offline</div>
+        <HeroEvidenceScene/>
       </section>
 
       <section className="stats-grid">
@@ -101,8 +137,9 @@ function HomeView({properties,onCreate,onOpen,onDemo,onSettings}){
         {properties.length?properties.map((p,index)=>{
           const mi=completion(p,'movein'),mo=completion(p,'moveout');
           return <motion.button
-            key={p.id} className="property-card"
-            initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:index*.035}}
+            key={p.id} className={'property-card '+(p.demo?'demo-card':'')}
+            initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} whileTap={{scale:.992}}
+            transition={{delay:index*.035}}
             onClick={()=>onOpen(p.id)}
           >
             <div className="property-card-top">
@@ -175,8 +212,8 @@ function PropertyView({property,mode,setMode,onBack,onRoom,onSave,onCompare,onRe
       {property.rooms.map((room,index)=>{
         const r=roomCompletion(room,mode);
         return <motion.button key={room.id} className="room-card" onClick={()=>onRoom(room.id)}
-          initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:index*.025}}>
-          <div className={'room-ring '+percentColor(r.pct)}><span>{r.pct}</span><small>%</small></div>
+          initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} whileTap={{scale:.992}} transition={{delay:index*.025}}>
+          <div className={'room-ring '+percentColor(r.pct)} style={{'--room-progress':r.pct}}><div className="room-ring-inner"><span>{r.pct}</span><small>%</small></div></div>
           <div className="room-card-copy"><h3>{room.name}</h3><p>{r.done}/{r.total} checks documented</p><Progress value={r.pct}/></div>
           <ChevronRight size={19} className="muted-icon"/>
         </motion.button>;
@@ -467,6 +504,7 @@ export default function App(){
   else if(route.view==='compare')page=<CompareView property={selected} onBack={back} onPdf={()=>makePdf('compare')} onShare={()=>shareSummary('compare')}/>;
 
   return <div className="app-frame">
+    <div className="ambient-stage" aria-hidden="true"><span className="ambient-orb a"/><span className="ambient-orb b"/><span className="ambient-grid"/></div>
     <AnimatePresence mode="wait">{React.cloneElement(page,{key:route.view+(route.propertyId||'')+(route.roomId||'')})}</AnimatePresence>
     <AnimatePresence>{pdfReady&&<PdfSheet data={pdfReady} onClose={()=>setPdfReady(null)}/>}</AnimatePresence>
     <AnimatePresence>{addRoomOpen&&<AddRoomSheet onClose={()=>setAddRoomOpen(false)} onAdd={addRoom}/>}</AnimatePresence>
